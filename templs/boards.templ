@@ -1,0 +1,61 @@
+package templs
+
+import "github.com/limeleaf-coop/knbn/pkg"
+
+templ lists(lists []pkg.List) {
+  <ol class="lists">
+      for _, list := range lists {
+      <li>
+          <header>
+              <h2>{ list.Title }</h2>
+              <nav>
+                  <a href="#" class="icon icon-edit">Edit</a>
+                  <a href="#" class="icon icon-arrow-left">Left</a>
+                  <a href="#" class="icon icon-arrow-right">Right</a>
+                  <a href="#" class="icon icon-delete">Delete</a>
+              </nav>
+          </header>
+
+          @cards(list.Cards)
+      </li>
+      }
+      <li class="new">
+          <header>
+              <h2>New List</h2>
+              <nav>
+                  <a href="#" class="icon icon-plus">New</a>
+              </nav>
+          </header>
+      </li>
+  </ol>
+}
+
+templ cards(cards []pkg.Card) {
+  <ol class="cards">
+      for _, card := range cards {
+      <li>
+          <header>
+              <h3>{ card.Title }</h3>
+              <nav>
+                  <a href="#" class="icon icon-edit">Edit</a>
+                  <a href="#" class="icon icon-arrow-left">Left</a>
+                  <a href="#" class="icon icon-arrow-right">Right</a>
+                  <a href="#" class="icon icon-arrow-up">Up</a>
+                  <a href="#" class="icon icon-arrow-down">Down</a>
+                  <a href="#" class="icon icon-delete">Delete</a>
+              </nav>
+          </header>
+        
+          <span class="desc">{ card.Desc }</span>
+      </li>
+      }
+      <li class="new">
+          <header>
+              <h3>New Card</h3>
+              <nav>
+                  <a href="#" class="icon icon-plus">New</a>
+              </nav>
+          </header>
+      </li>
+  </ol>
+}
