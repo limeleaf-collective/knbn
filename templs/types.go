@@ -1,4 +1,4 @@
-package pkg
+package templs
 
 type Board struct {
 	Title string

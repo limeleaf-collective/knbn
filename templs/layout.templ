@@ -1,8 +1,6 @@
 package templs
 
-import (
-	"github.com/limeleaf-coop/knbn/pkg"
-)
+import "strconv"
 
 templ head() {
     <head>
@@ -125,21 +123,22 @@ templ IndexPage() {
     </html>
 }
 
-templ BoardsPage() {
+templ BoardsPage(boards []Board) {
     <html>
         @head()
         <body class="narrow">
             @header(true)
 
             <ul>
-                <li><a href="/boards/1234">Limeleaf Operations</a></li>
-                <li><a href="/boards/1234">Limeleaf CRM</a></li>
+                for idx, board := range boards {
+                <li><a href={ templ.URL("/boards/" + strconv.FormatInt(int64(idx), 10)) }>{ board.Title }</a></li>
+                }
             </ul>
         </body>
     </html>
 }
 
-templ BoardPage(board pkg.Board) {
+templ BoardPage(board Board) {
     <html>
         @head()
         <body>
