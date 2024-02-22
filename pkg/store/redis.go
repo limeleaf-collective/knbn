@@ -9,7 +9,6 @@ import (
 	nanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
-	"log"
 	"log/slog"
 	"strings"
 )
@@ -101,10 +100,10 @@ func (r Redis) DeleteBoard(ctx context.Context, id string) error {
 	return nil
 }
 
-var getBoardsScript = redis.NewScript(`
+var getAllHashes = redis.NewScript(`
 local key = KEYS[1]
-local boardKeys = {}
-local boards = {}
+local hashKeys = {}
+local hashes = {}
 local err = nil
 
 local cursor = 0
@@ -118,24 +117,24 @@ repeat
 	end
 
 	for _, v in ipairs(data) do
-		boardKeys[#boardKeys+1] = v
+		hashKeys[#hashKeys+1] = v
 	end
 until tonumber(cursor) == 0
 
-local boardsIdx = 1
-for i, _ in ipairs(boardKeys) do
-	local boardKey = boardKeys[i]
+local hashesIdx = 1
+for i, _ in ipairs(hashKeys) do
+	local hashKey = hashKeys[i]
 
-	local board = redis.pcall("HGETALL", boardKey)
-	if type(board) == 'table' and board.err then
-		err = "hgetall failed '" .. boardKey .. "'"
+	local hash = redis.pcall("HGETALL", hashKey)
+	if type(hash) == 'table' and hash.err then
+		err = "hgetall failed '" .. hashKey .. "'"
 		redis.log(redis.LOG_NOTICE, err, result.err)
 	end
 
-	if board[1] then
-		boards[boardsIdx] = boardKey
-		boards[boardsIdx + 1] = cjson.encode(board)
-		boardsIdx = boardsIdx + 2
+	if hash[1] then
+		hashes[hashesIdx] = hashKey
+		hashes[hashesIdx + 1] = cjson.encode(hash)
+		hashesIdx = hashesIdx + 2
 	end
 end
 
@@ -143,36 +142,63 @@ if err ~= nil then
 	return { err = err }
 end
 
-return boards
+return hashes
 `)
+
+func (r Redis) getHashesForKey(ctx context.Context, key string) ([]map[string]string, error) {
+	var hashes []map[string]string
+	raw, err := getAllHashes.Run(ctx, r.db, []string{key}).StringSlice()
+	if err != nil {
+		return hashes, errs.Join(ErrStorage, err)
+	}
+
+	for i := 0; i < len(raw); i += 2 {
+		listKey := raw[i]
+		listJSON := raw[i+1]
+
+		var props []string
+		if err := json.Unmarshal([]byte(listJSON), &props); err != nil {
+			return hashes, errs.Join(ErrStorage, err)
+		}
+
+		id := strings.Split(listKey, ":")[1]
+
+		hash := make(map[string]string)
+		hash["id"] = id
+		for pi := 0; pi < len(props); pi += 2 {
+			k := props[pi]
+			v := props[pi+1]
+			hash[k] = v
+		}
+
+		hashes = append(hashes, hash)
+	}
+
+	return hashes, nil
+}
 
 func (r Redis) GetBoards(ctx context.Context) ([]data.Board, error) {
 	var boards []data.Board
-	raw, err := getBoardsScript.Run(ctx, r.db, []string{boardKey("*")}).StringSlice()
+	bms, err := r.getHashesForKey(ctx, boardKey("*"))
 	if err != nil {
 		return boards, errs.Join(ErrStorage, err)
 	}
 
-	for i := 0; i < len(raw); i += 2 {
-		boardKey := raw[i]
-		boardJSON := raw[i+1]
-
-		var props []string
-		if err := json.Unmarshal([]byte(boardJSON), &props); err != nil {
-			log.Fatalf("%+v", err)
-		}
-
-		id := strings.Split(boardKey, ":")[1]
-
-		board := data.Board{ID: id}
-		for pi := 0; pi < len(props); pi += 2 {
-			switch props[pi] {
+	for _, b := range bms {
+		board := data.Board{}
+		for k, v := range b {
+			switch k {
+			case "id":
+				board.ID = v
 			case "title":
-				board.Title = props[pi+1]
+				board.Title = v
 			case "lists":
-				board.ListIDs = strings.Split(props[pi+1], ",")
+				ids := strings.Split(v, ",")
+				if ids[0] != "" {
+					board.ListIDs = ids
+				}
 			default:
-				slog.Warn("unknown board property", "prop", props[pi], "value", props[pi+1])
+				slog.Warn("unknown board property", "prop", k, "value", v)
 			}
 		}
 
@@ -182,13 +208,59 @@ func (r Redis) GetBoards(ctx context.Context) ([]data.Board, error) {
 	return boards, nil
 }
 
-//func (r Redis) SetListsForBoard(ctx context.Context, boardID string, listIDs []string) error {
-//
-//}
-//
-//func (r Redis) GetListsForBoard(ctx context.Context, id string) ([]data.List, error) {
-//
-//}
+func (r Redis) GetListsForBoard(ctx context.Context, id string) ([]data.List, error) {
+	var lists []data.List
+	lms, err := r.getHashesForKey(ctx, listKey(id, "*"))
+	if err != nil {
+		return lists, errs.Join(ErrStorage, err)
+	}
+
+	for _, b := range lms {
+		list := data.List{}
+		for k, v := range b {
+			switch k {
+			case "id":
+				ids := strings.Split(v, ":")
+				list.ID = ids[len(ids)-1]
+			case "title":
+				list.Title = v
+			case "cards":
+				ids := strings.Split(v, ",")
+				if ids[0] != "" {
+					list.CardIDs = ids
+				}
+			default:
+				slog.Warn("unknown list property", "prop", k, "value", v)
+			}
+		}
+
+		lists = append(lists, list)
+	}
+
+	return lists, nil
+}
+
+func (r Redis) SetListsForBoard(ctx context.Context, boardID string, listIDs []string) error {
+	if boardID == "" {
+		return errors.Wrap(ErrInvalid, "missing id")
+	}
+	k := boardKey(boardID)
+
+	exists, err := r.db.Exists(ctx, k).Result()
+	if err != nil {
+		return errs.Join(ErrStorage, err)
+	} else if exists == 0 {
+		return ErrNotFound
+	}
+
+	lists := strings.Join(listIDs, ",")
+	if err := r.db.HSet(ctx, k, "lists", lists).Err(); err != nil {
+		return errs.Join(ErrStorage, err)
+	}
+
+	return nil
+}
+
 //
 //func (r Redis) CreateList(ctx context.Context, list data.List) error {
 //
@@ -230,19 +302,11 @@ func boardKey(id string) string {
 	return fmt.Sprintf("boards:%s", id)
 }
 
-//func listSortKey(bid string) string {
-//	return fmt.Sprintf("zlists:%s", bid)
-//}
+func listKey(bid, lid string) string {
+	return fmt.Sprintf("lists:%s:%s", bid, lid)
+}
 
-//func listKey(bid, lid string) string {
-//	return fmt.Sprintf("lists:%s:%s", bid, lid)
-//}
-//
 //func cardKey(lid, cid string) string {
 //	return fmt.Sprintf("cards:%s:%s", lid, cid)
 //
-//}
-//
-//func cardSortKey(lid string) string {
-//	return fmt.Sprintf("zcards:%s", lid)
 //}

@@ -9,18 +9,19 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
+)
+
+var (
+	defaultRedisAddr = "0.0.0.0:6379"
 )
 
 func main() {
 	dbAddr := os.Getenv("DB_ADDR")
+	if dbAddr == "" {
+		dbAddr = defaultRedisAddr
+	}
 	rdb := redis.NewClient(&redis.Options{
-		Addr:            dbAddr,
-		MinRetryBackoff: 250 * time.Millisecond,
-		MaxRetryBackoff: 2 * time.Second,
-		DialTimeout:     2 * time.Second,
-		ReadTimeout:     2 * time.Second,
-		WriteTimeout:    2 * time.Second,
+		Addr: dbAddr,
 	})
 
 	s := store.NewRedis(rdb)
