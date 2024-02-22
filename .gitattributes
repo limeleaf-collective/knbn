@@ -4,3 +4,4 @@
 # Workaround for: https://gitlab.com/gitlab-org/gitlab/-/issues/17647 and https://gitlab.com/gitlab-org/gitlab/-/issues/216396
 
 /templs/*_templ.go
+/pkg/store/dump.rdb

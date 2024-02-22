@@ -30,6 +30,18 @@ redis: ## Runs only the redis service in docker-compose
 	@docker-compose up -d redis && \
 	echo "RedisInsight:\thttp://localhost:8001"
 
+.PHONY: redis-dump
+redis-dump: redis ## Dump the current state of Redis to a local file
+	@docker exec -it knbn-redis-1 sh -c "redis-cli SAVE" && \
+	docker cp knbn-redis-1:/data/dump.rdb ./pkg/store/dump.rdb
+
+.PHONY: redis-load
+redis-load: redis ## Load our example Redis db into the running container
+	@docker cp ./pkg/store/dump.rdb knbn-redis-1:/data/dump.rdb && \
+	docker compose stop redis && \
+	docker compose start redis
+
+
 .PHONY: tools
 tools: ## Installs development tools
 	@go install github.com/a-h/templ/cmd/templ@latest
