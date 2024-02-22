@@ -1,7 +1,7 @@
 package templs
 
 import (
-	"github.com/limeleaf-coop/knbn/pkg"
+	"github.com/limeleaf-coop/knbn/pkg/data"
 )
 
 templ head() {
@@ -125,21 +125,22 @@ templ IndexPage() {
     </html>
 }
 
-templ BoardsPage() {
+templ BoardsPage(boards []data.Board) {
     <html>
         @head()
         <body class="narrow">
             @header(true)
 
             <ul>
-                <li><a href="/boards/1234">Limeleaf Operations</a></li>
-                <li><a href="/boards/1234">Limeleaf CRM</a></li>
+                for _, board := range boards {
+                <li><a href="/boards/{board.ID}">{board.Title}</a></li>
+                }
             </ul>
         </body>
     </html>
 }
 
-templ BoardPage(board pkg.Board) {
+templ BoardPage(board data.Board) {
     <html>
         @head()
         <body>

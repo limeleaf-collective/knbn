@@ -10,9 +10,9 @@ import "context"
 import "io"
 import "bytes"
 
-import "github.com/limeleaf-coop/knbn/pkg"
+import "github.com/limeleaf-coop/knbn/pkg/data"
 
-func lists(lists []pkg.List) templ.Component {
+func lists(lists []data.List) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -67,7 +67,7 @@ func lists(lists []pkg.List) templ.Component {
 	})
 }
 
-func cards(cards []pkg.Card) templ.Component {
+func cards(cards []data.Card) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {

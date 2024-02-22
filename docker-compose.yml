@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  redis:
+    networks:
+      - internal
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379" # Redis
+      - "8001:8001" # RedisInsight
+    volumes:
+      - redis_data:/data
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  redis_data:

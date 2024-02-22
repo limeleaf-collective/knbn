@@ -1,8 +1,8 @@
 package templs
 
-import "github.com/limeleaf-coop/knbn/pkg"
+import "github.com/limeleaf-coop/knbn/pkg/data"
 
-templ lists(lists []pkg.List) {
+templ lists(lists []data.List) {
   <ol class="lists">
       for _, list := range lists {
       <li>
@@ -30,7 +30,7 @@ templ lists(lists []pkg.List) {
   </ol>
 }
 
-templ cards(cards []pkg.Card) {
+templ cards(cards []data.Card) {
   <ol class="cards">
       for _, card := range cards {
       <li>

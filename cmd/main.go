@@ -1,49 +1,37 @@
 package main
 
 import (
-	"net/http"
-
+	"context"
 	"github.com/a-h/templ"
-	"github.com/limeleaf-coop/knbn/pkg"
+	"github.com/limeleaf-coop/knbn/pkg/store"
 	"github.com/limeleaf-coop/knbn/templs"
+	"github.com/redis/go-redis/v9"
+	"log/slog"
+	"net/http"
+	"os"
+	"time"
 )
 
 func main() {
-	board := pkg.Board{
-		Title: "Limeleaf Operations",
-		Lists: []pkg.List{
-			{
-				Title: "Backlog",
-				Cards: []pkg.Card{
-					{
-						Title: "Set up LLC",
-						Desc:  "Still need to figure out how to LLC",
-					},
-				},
-			},
-			{
-				Title: "Doing",
-				Cards: []pkg.Card{
-					{
-						Title: "Decide on Email",
-						Desc:  "Do we stick with forwarding, Fastmail, or Google Workspace?",
-					},
-				},
-			},
-			{
-				Title: "Done",
-				Cards: []pkg.Card{
-					{
-						Title: "Decide on Notion",
-						Desc:  "Do we just pay for it and use it?",
-					},
-				},
-			},
-		},
+	dbAddr := os.Getenv("DB_ADDR")
+	rdb := redis.NewClient(&redis.Options{
+		Addr:            dbAddr,
+		MinRetryBackoff: 250 * time.Millisecond,
+		MaxRetryBackoff: 2 * time.Second,
+		DialTimeout:     2 * time.Second,
+		ReadTimeout:     2 * time.Second,
+		WriteTimeout:    2 * time.Second,
+	})
+
+	s := store.NewRedis(rdb)
+	boards, err := s.GetBoards(context.TODO())
+	if err != nil {
+		slog.Error("fetching boards", "err", err)
+		os.Exit(1)
 	}
 
-	http.Handle("/boards/1234", templ.Handler(templs.BoardPage(board)))
-	http.Handle("/boards", templ.Handler(templs.BoardsPage()))
+	//http.Handle("/boards/{id}", templ.Handler(templs.BoardPage(board)))
+	http.Handle("/boards", templ.Handler(templs.BoardsPage(boards)))
 	http.Handle("/", templ.Handler(templs.IndexPage()))
 	http.ListenAndServe(":8080", nil)
 }
