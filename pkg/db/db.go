@@ -20,6 +20,13 @@ const (
 	sqlSelect      = "SELECT data FROM %s WHERE (id = '%s')"
 	sqlQuery       = "SELECT %s.id, %s.data FROM %s, json_tree(%s.data) WHERE (fullkey LIKE '%s' AND value %s %v)"
 	sqlDelete      = "DELETE FROM %s WHERE (id = '%s')"
+
+	// Pulled from PocketBase.io for how it opens a SQLite connection.
+	//
+	// Note: the busy_timeout pragma must be first because
+	// the connection needs to be set to block on busy before WAL mode
+	// is set in case it hasn't been already set by another connection.
+	pragmas = "?_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=journal_size_limit(200000000)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(ON)&_pragma=temp_store(MEMORY)&_pragma=cache_size(-16000)"
 )
 
 // Op is a comparison operator when querying for documents.
@@ -60,7 +67,7 @@ type Database struct {
 
 // Open create a SQLite connection at the specified path location.
 func Open(path string) (*Database, error) {
-	db, err := sql.Open("sqlite", path)
+	db, err := sql.Open("sqlite", path+pragmas)
 	if err != nil {
 		return nil, err
 	}
