@@ -27,3 +27,14 @@ Generating production code: /usr/local/src/limeleaf-coop/knbn
 ```
 
 Open http://localhost:8080
+
+## Seeding Database
+
+If you want to seed the database with some data you can run:
+
+```
+> go run ./cmd/main.go -seed-data-dir ./testdata/db
+```
+
+Feel free to add more `.json` files for more data. To re-seed a new databse just
+delete the database file on disk first or else you'll see key contraint errors.
