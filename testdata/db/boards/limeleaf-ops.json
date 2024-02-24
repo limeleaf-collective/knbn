@@ -1,0 +1,32 @@
+{
+  "Title": "Limeleaf Ops",
+  "Lists": [
+    {
+      "Title": "Backlog",
+      "Cards": [
+        {
+          "Title": "Set up LLC",
+          "Desc": "Still need to figure out how to LLC"
+        }
+      ]
+    },
+    {
+      "Title": "Doing",
+      "Cards": [
+        {
+          "Title": "Decide on Email",
+          "Desc": "Do we stick with forwarding, Fastmail, or Google Workspace?"
+        }
+      ]
+    },
+    {
+      "Title": "Done",
+      "Cards": [
+        {
+          "Title": "Decide on Notion",
+          "Desc": "Do we just pay for it and use it?"
+        }
+      ]
+    }
+  ]
+}
