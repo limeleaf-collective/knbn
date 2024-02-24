@@ -1,6 +1,7 @@
 package templs
 
 type Board struct {
+	ID    string
 	Title string
 	Lists []List
 }
