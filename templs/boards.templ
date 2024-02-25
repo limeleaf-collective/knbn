@@ -1,20 +1,51 @@
 package templs
 
-templ lists(lists []List) {
+import (
+    "fmt"
+)
+
+templ ListTitle(boardId string, listIdx int, title string) {
+    <div hx-target="this" hx-swap="outerHTML">
+      <h2 hx-get={ fmt.Sprintf("/boards/%s/lists/%d/title/edit?title=%s", boardId, listIdx, title) }>{ title }</h2>
+    </div>
+}
+
+templ CardTitle(boardId string, listIdx int, cardIdx int, title string) {
+    <div hx-target="this" hx-swap="outerHTML">
+      <h3 hx-get={ fmt.Sprintf("/boards/%s/lists/%d/cards/%d/title/edit?title=%s", boardId, listIdx, cardIdx, title) }>{ title }</h3>
+    </div>
+}
+
+templ EditListTitle(boardId string, listIdx int, title string) {
+    <form hx-put={ fmt.Sprintf("/boards/%s/lists/%d/title/edit", boardId, listIdx) } hx-target="this" hx-swap="outerHTML">
+        <input type="text" name="Title" value={ title } />
+        <button type="submit">Save</button>
+        <button hx-get={ fmt.Sprintf("/boards/%s/lists/%d/title?title=%s", boardId, listIdx, title) }>Cancel</button>
+    </form>
+}
+
+templ EditCardTitle(boardId string, listIdx int, cardIdx int, title string) {
+    <form hx-put={ fmt.Sprintf("/boards/%s/lists/%d/cards/%d/title/edit", boardId, listIdx, cardIdx) } hx-target="this" hx-swap="outerHTML">
+        <input type="text" name="Title" value={ title } />
+        <button type="submit">Save</button>
+        <button hx-get={ fmt.Sprintf("/boards/%s/lists/%d/cards/%d/title?title=%s", boardId, listIdx, cardIdx, title) }>Cancel</button>
+    </form>
+}
+
+templ lists(boardId string, lists []List) {
   <ol class="lists">
-      for _, list := range lists {
+      for idx, list := range lists {
       <li>
           <header>
-              <h2>{ list.Title }</h2>
               <nav>
-                  <a href="#" class="icon icon-edit">Edit</a>
-                  <a href="#" class="icon icon-arrow-left">Left</a>
-                  <a href="#" class="icon icon-arrow-right">Right</a>
-                  <a href="#" class="icon icon-delete">Delete</a>
+                  <a href="#" class="icon icon-arrow-left"></a>
+                  <a href="#" class="icon icon-arrow-right"></a>
+                  <a href="#" class="icon icon-delete"></a>
               </nav>
+              @ListTitle(boardId, idx, list.Title)
           </header>
 
-          @cards(list.Cards)
+          @cards(boardId, idx, list.Cards)
       </li>
       }
       <li class="new">
@@ -28,20 +59,21 @@ templ lists(lists []List) {
   </ol>
 }
 
-templ cards(cards []Card) {
+templ cards(boardId string, listIdx int, cards []Card) {
   <ol class="cards">
-      for _, card := range cards {
+      for idx, card := range cards {
       <li>
           <header>
-              <h3>{ card.Title }</h3>
               <nav>
-                  <a href="#" class="icon icon-edit">Edit</a>
-                  <a href="#" class="icon icon-arrow-left">Left</a>
-                  <a href="#" class="icon icon-arrow-right">Right</a>
-                  <a href="#" class="icon icon-arrow-up">Up</a>
-                  <a href="#" class="icon icon-arrow-down">Down</a>
-                  <a href="#" class="icon icon-delete">Delete</a>
+                  <a href="#" class="icon icon-arrow-left"></a>
+                  <a href="#" class="icon icon-arrow-right"></a>
+                  <a href="#" class="icon icon-arrow-up"></a>
+                  <a href="#" class="icon icon-arrow-down"></a>
+                  <a href="#" class="icon icon-delete"></a>
               </nav>
+              <div hx-target="this" hx-swap="outerHTML">
+                  <h3 hx-get={ fmt.Sprintf("/boards/%s/lists/%d/cards/%d/title/edit", boardId, listIdx, idx) }>{ card.Title }</h3>
+              </div>
           </header>
         
           <span class="desc">{ card.Desc }</span>
@@ -51,7 +83,7 @@ templ cards(cards []Card) {
           <header>
               <h3>New Card</h3>
               <nav>
-                  <a href="#" class="icon icon-plus">New</a>
+                  <a href="#" class="icon icon-plus"></a>
               </nav>
           </header>
       </li>

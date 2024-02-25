@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/a-h/templ"
@@ -92,14 +93,52 @@ func BoardHandler(db *docdb.Database) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
+		boardId := r.PathValue("id")
+
 		var board templs.Board
-		err = db.Collection("boards").Document(r.PathValue("id")).Get(r.Context(), &board)
+		err = db.Collection("boards").Document(boardId).Get(r.Context(), &board)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		board.ID = boardId
 		t := templs.BoardPage(board)
+		templ.Handler(t).ServeHTTP(w, r)
+	}
+}
+
+func TitleHandler(db *docdb.Database) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		boardId := r.PathValue("boardId")
+		listIdx, _ := strconv.ParseInt(r.PathValue("listIdx"), 10, 64)
+		title := r.URL.Query().Get("title")
+
+		if r.PathValue("cardIdx") != "" {
+			cardIdx, _ := strconv.ParseInt(r.PathValue("cardIdx"), 10, 64)
+			t := templs.CardTitle(boardId, int(listIdx), int(cardIdx), title)
+			templ.Handler(t).ServeHTTP(w, r)
+		}
+
+		t := templs.ListTitle(boardId, int(listIdx), title)
+		templ.Handler(t).ServeHTTP(w, r)
+	}
+}
+
+func EditTitleHandler(db *docdb.Database) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		boardId := r.PathValue("boardId")
+		listIdx, _ := strconv.ParseInt(r.PathValue("listIdx"), 10, 64)
+		title := r.URL.Query().Get("title")
+
+		if r.PathValue("cardIdx") != "" {
+			cardIdx, _ := strconv.ParseInt(r.PathValue("cardIdx"), 10, 64)
+			t := templs.EditCardTitle(boardId, int(listIdx), int(cardIdx), title)
+			templ.Handler(t).ServeHTTP(w, r)
+			return
+		}
+
+		t := templs.EditListTitle(boardId, int(listIdx), title)
 		templ.Handler(t).ServeHTTP(w, r)
 	}
 }
