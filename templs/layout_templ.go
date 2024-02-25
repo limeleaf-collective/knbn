@@ -97,7 +97,7 @@ func IndexPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form method=\"get\" action=\"/boards\"><p>Enter your email and we'll send you a one-time sign in link.</p><p><label>Email</label><br><input type=\"email\" name=\"email\"></p><button type=\"submit\">Sign In</button></form></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form method=\"post\" action=\"/sign-in\"><p>Enter your email and we'll send you a one-time sign in link.</p><p><label>Email</label><br><input type=\"email\" name=\"email\"></p><button type=\"submit\">Sign In</button></form></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

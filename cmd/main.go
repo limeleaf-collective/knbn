@@ -39,6 +39,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /boards/{id}", pkg.BoardHandler(db))
 	mux.HandleFunc("GET /boards", pkg.BoardsHandler(db))
+	mux.HandleFunc("POST /sign-in", pkg.SignInHandler(db))
 	mux.HandleFunc("GET /", pkg.IndexHandler)
 
 	srv := &http.Server{
