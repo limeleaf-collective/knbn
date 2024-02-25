@@ -37,6 +37,10 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /boards/{boardId}/lists/{listIdx}/cards/{cardIdx}/title", pkg.TitleHandler(db))
+	mux.HandleFunc("GET /boards/{boardId}/lists/{listIdx}/cards/{cardIdx}/title/edit", pkg.EditTitleHandler(db))
+	mux.HandleFunc("GET /boards/{boardId}/lists/{listIdx}/title", pkg.TitleHandler(db))
+	mux.HandleFunc("GET /boards/{boardId}/lists/{listIdx}/title/edit", pkg.EditTitleHandler(db))
 	mux.HandleFunc("GET /boards/{id}", pkg.BoardHandler(db))
 	mux.HandleFunc("GET /boards", pkg.BoardsHandler(db))
 	mux.HandleFunc("POST /sign-in", pkg.SignInHandler(db))
