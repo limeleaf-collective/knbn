@@ -3,6 +3,7 @@ package templs
 templ head() {
     <head>
         <title>knbn</title>
+        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
         <link rel="stylesheet" href="https://brutalist.style/brutalist.css" />
         <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css" />
         <style>
@@ -58,14 +59,13 @@ templ head() {
 
             .lists header h2,
             .lists header h3 {
-                display: inline-block;
                 margin: 0;
                 padding-bottom: 10px;
             }
 
             .narrow header nav,
             .lists header nav {
-                float: right;
+                text-align: right;
             }
 
         .cards {
@@ -147,7 +147,7 @@ templ BoardPage(board Board) {
                 </nav>
             </header>
             
-            @lists(board.Lists)
+            @lists(board.ID, board.Lists)
         </body>
     </html>
 }
