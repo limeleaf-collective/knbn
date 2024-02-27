@@ -1,0 +1,27 @@
+{
+  "Title": "Limeleaf CRM",
+  "Lists": [
+    {
+      "Title": "Leads",
+      "Cards": [
+        {
+          "Title": "Glens Falls School District",
+          "Desc": "A bazillion dollars work!"
+        }
+      ]
+    },
+    {
+      "Title": "Qualified",
+      "Cards": []
+    },
+    {
+      "Title": "Signed",
+      "Cards": [
+        {
+          "Title": "NYS Pay Tickets",
+          "Desc": "$100k"
+        }
+      ]
+    }
+  ]
+}

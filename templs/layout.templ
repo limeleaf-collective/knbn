@@ -1,7 +1,5 @@
 package templs
 
-import "strconv"
-
 templ head() {
     <head>
         <title>knbn</title>
@@ -109,7 +107,7 @@ templ IndexPage() {
         <body class="narrow">
             @header(false)
 
-            <form method="get" action="/boards">
+            <form method="post" action="/sign-in">
                 <p>Enter your email and we'll send you a one-time sign in link.</p>
 
                 <p>
@@ -130,8 +128,8 @@ templ BoardsPage(boards []Board) {
             @header(true)
 
             <ul>
-                for idx, board := range boards {
-                <li><a href={ templ.URL("/boards/" + strconv.FormatInt(int64(idx), 10)) }>{ board.Title }</a></li>
+                for _, board := range boards {
+                <li><a href={ templ.URL("/boards/" + board.ID) }>{ board.Title }</a></li>
                 }
             </ul>
         </body>

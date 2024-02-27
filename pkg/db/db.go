@@ -9,6 +9,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path"
+	"strings"
 
 	_ "modernc.org/sqlite"
 )
@@ -18,6 +21,7 @@ const (
 	sqlInsert      = "INSERT INTO %s (id, data) VALUES ('%s', '%s')"
 	sqlUpdate      = "UPDATE %s SET data = '%s' WHERE (id = '%s')"
 	sqlSelect      = "SELECT data FROM %s WHERE (id = '%s')"
+	sqlSelectAll   = "SELECT id, data FROM %s ORDER BY id"
 	sqlQuery       = "SELECT %s.id, %s.data FROM %s, json_tree(%s.data) WHERE (fullkey LIKE '%s' AND value %s %v)"
 	sqlDelete      = "DELETE FROM %s WHERE (id = '%s')"
 
@@ -82,6 +86,50 @@ func (db *Database) Close() error {
 	return db.sqlite.Close()
 }
 
+func (db *Database) SeedFromDir(ctx context.Context, dir string) error {
+	collections, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, collection := range collections {
+		col := db.Collection(collection.Name())
+
+		_, err := col.database.sqlite.ExecContext(ctx, fmt.Sprintf(sqlCreateTable, col.ID))
+		if err != nil {
+			return err
+		}
+
+		documents, err := os.ReadDir(path.Join(dir, collection.Name()))
+		if err != nil {
+			return err
+		}
+
+		for _, document := range documents {
+			if document.IsDir() {
+				continue
+			}
+
+			doc := col.Document(strings.TrimSuffix(document.Name(), ".json"))
+
+			docPath := path.Join(dir, collection.Name(), document.Name())
+			data, err := os.ReadFile(docPath)
+			if err != nil {
+				return err
+			}
+
+			doc.data = data
+
+			_, err = doc.collection.database.sqlite.ExecContext(ctx, fmt.Sprintf(sqlInsert, doc.collection.ID, doc.ID, doc.data))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // Collection returns a reference to a database collection.
 func (db *Database) Collection(id string) *Collection {
 	return &Collection{
@@ -102,6 +150,32 @@ func (c *Collection) Document(id string) *Document {
 		collection: c,
 		ID:         id,
 	}
+}
+
+func (c *Collection) QueryAll(ctx context.Context) ([]*Document, error) {
+	sql := fmt.Sprintf(sqlSelectAll, c.ID)
+
+	r, err := c.database.sqlite.QueryContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+
+	docs := make([]*Document, 0)
+	for r.Next() {
+		if err := r.Err(); err != nil {
+			return nil, err
+		}
+
+		doc := Document{}
+
+		if err := r.Scan(&doc.ID, &doc.data); err != nil {
+			return nil, err
+		}
+
+		docs = append(docs, &doc)
+	}
+
+	return docs, nil
 }
 
 // Query returns a list of Documents where the values at keypath match the value
