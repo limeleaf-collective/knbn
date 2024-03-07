@@ -24,7 +24,11 @@ func TestDocument(t *testing.T) {
 	ctx := context.Background()
 
 	db, _ := docdb.Open("./test.db")
-	defer os.Remove("./test.db")
+	defer func() {
+		os.Remove("./test.db")
+		os.Remove("./test.db-shm")
+		os.Remove("./test.db-wal")
+	}()
 
 	d1 := doc{Name: "Blain Smith", Age: 40, Dead: false, Numbers: []numbers{{Type: "home", Digits: "9784305790"}, {Type: "mobile", Digits: "9784305790"}}}
 
